@@ -15,13 +15,19 @@ function salvarProdutos(produtos) {
   fs.writeFileSync('./data/produtos.json', JSON.stringify(produtos, null, 2))
 }
 
-app.get('/', (req, res) => {
-  res.send('API de Estoque funcionando!')
+app.get('/status', (req, res) => {
+  res.json({
+    status: "API funcionando",
+    data: new Date()
+  })
 })
 
 app.get('/produtos', (req, res) => {
   const produtos = lerProdutos()
-  res.json(produtos)
+  res.json({
+    sucesso: true,
+    dados: produtos
+  })
 })
 
 app.get('/produtos/:id', (req, res) => {
@@ -31,7 +37,10 @@ app.get('/produtos/:id', (req, res) => {
   const produto = produtos.find(p => p.id === id)
 
   if (!produto) {
-    return res.status(404).json({ erro: 'Produto não encontrado' })
+    return res.status(404).json({
+      sucesso: false,
+      mensagem: "Produto não encontrado"
+    })
   }
 
   res.json(produto)
@@ -54,13 +63,17 @@ app.post('/produtos', (req, res) => {
 
   const produtos = lerProdutos()
 
+  produtos.sort((a, b) => a.id - b.id)
+
+  res.json(produtos)
   const novoProduto = {
     id: produtos.length > 0 ? produtos[produtos.length - 1].id + 1 : 1,
     nome,
     descricao,
     preco,
     quantidade,
-    categoria
+    categoria,
+    criadoEm: new Date().toISOString()
   }
 
   produtos.push(novoProduto)
@@ -76,10 +89,17 @@ app.put('/produtos/:id', (req, res) => {
 
   const produtos = lerProdutos()
 
+  produtos.sort((a, b) => a.id - b.id)
+
+  res.json(produtos)
+
   const index = produtos.findIndex(p => p.id === id)
 
   if (index === -1) {
-    return res.status(404).json({ erro: 'Produto não encontrado' })
+    return res.status(404).json({
+      sucesso: false,
+      mensagem: "Produto não encontrado"
+    })
   }
 
   produtos[index] = {
@@ -104,7 +124,10 @@ app.delete('/produtos/:id', (req, res) => {
   const novoArray = produtos.filter(p => p.id !== id)
 
   if (novoArray.length === produtos.length) {
-    return res.status(404).json({ erro: 'Produto não encontrado' })
+    return res.status(404).json({
+      sucesso: false,
+      mensagem: "Produto não encontrado"
+    })
   }
 
   salvarProdutos(novoArray)
